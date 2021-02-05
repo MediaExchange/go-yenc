@@ -28,19 +28,19 @@ func TestEncode1(t *testing.T) {
 	var actual bytes.Buffer
 
 	// input to encode
-	file, err := os.Open("testdata/test1.txt")
+	file, err := os.Open("testdata/testfile.txt")
 	if err != nil {
 		t.Error(err)
 	}
 
 	// encode it
-	err = Encode(&actual, file, 128, "test1.txt")
+	err = Encode(&actual, file, 128, "testfile.txt")
 	if err != nil {
 		t.Error(err)
 	}
 
 	// Compare to the original
-	expected, err := ioutil.ReadFile("testdata/test1.yenc")
+	expected, err := ioutil.ReadFile("testdata/testfile.yenc")
 	if err != nil {
 		t.Error(err)
 	}
@@ -55,7 +55,7 @@ func TestDecode1(t *testing.T) {
 	var actual bytes.Buffer
 
 	// input to decode
-	file, err := os.Open("testdata/test1.yenc")
+	file, err := os.Open("testdata/testfile.ntx")
 	if err != nil {
 		t.Error(err)
 	}
@@ -67,7 +67,7 @@ func TestDecode1(t *testing.T) {
 	}
 
 	// compare to the original
-	expected, err := ioutil.ReadFile("testdata/test1.txt")
+	expected, err := ioutil.ReadFile("testdata/testfile.txt")
 	if err != nil {
 		t.Error(err)
 	}

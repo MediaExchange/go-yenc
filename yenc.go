@@ -69,11 +69,12 @@ func Encode(out io.Writer, in io.Reader, lineLength int, filename string) error 
 
 			inBuf.WriteByte(b)
 
-			if IsCritical(b + Answer) {
+			b += Answer
+
+			if IsCritical(b) {
+				l++
 				outBuf.WriteByte(Escape)
 				b += Crit
-			} else {
-				b += Answer
 			}
 
 			outBuf.WriteByte(b)
@@ -89,7 +90,7 @@ func Encode(out io.Writer, in io.Reader, lineLength int, filename string) error 
 	}
 
 	// Write the encoded data.
-	_, err = fmt.Fprintf(out, "%s line=%d size=%d name=%s\r\n", Ybegin, lineLength, inBuf.Len(), filename)
+	_, err = fmt.Fprintf(out, "%s line=%d size=%d name=%s \r\n", Ybegin, lineLength, inBuf.Len(), filename)
 	if err != nil {
 		return err
 	}
@@ -99,7 +100,11 @@ func Encode(out io.Writer, in io.Reader, lineLength int, filename string) error 
 		return err
 	}
 
-	_, err = fmt.Fprintf(out, "%s size=%d crc32=%08x\r\n", Yend, inBuf.Len(), crc32.ChecksumIEEE(inBuf.Bytes()))
+	_, err = fmt.Fprintf(out, "%s size=%d crc32=%08x \r\n", Yend, inBuf.Len(), crc32.ChecksumIEEE(inBuf.Bytes()))
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 
@@ -175,10 +180,9 @@ func Decode(out io.Writer, in io.Reader) (err error) {
 
 			if isEscape {
 				isEscape = false
-				b-=Crit
-			} else {
-				b -= Answer
+				b -= Crit
 			}
+			b -= Answer
 
 			if err = wr.WriteByte(b); err != nil {
 				// The outer loop will terminate due to the err != nil condition
@@ -203,6 +207,7 @@ func Decode(out io.Writer, in io.Reader) (err error) {
 	return
 }
 
+// ReadLine reads a line delimited with either "\n" or "\r\n"
 func ReadLine(in *bufio.Reader) (buf bytes.Buffer, err error) {
 	var isPrefix bool = true
 	for isPrefix && err == nil {
@@ -214,7 +219,7 @@ func ReadLine(in *bufio.Reader) (buf bytes.Buffer, err error) {
 	return
 }
 
-// Parses a marker line that uses the format, `prefix key=value key=value...`
+// ParseMarkerLine parses a line that uses the format, `prefix key=value key=value...`
 func ParseMarkerLine(line string, prefix string) map[string]string {
 	marker := make(map[string]string)
 	line = strings.TrimSpace(strings.TrimPrefix(line, prefix))
@@ -228,5 +233,5 @@ func ParseMarkerLine(line string, prefix string) map[string]string {
 
 // IsCritical returns `true` if the byte is one of the "critical" values.
 func IsCritical(b byte) bool {
-	return b == 0x00 || b == 0x0A || b == 0x0D || b == Escape
+	return b == 0x00 || b == 0x09 || b == 0x0A || b == 0x0D || b == 0x02E || b == Escape
 }
